@@ -1,7 +1,5 @@
 package repository
 
-import java.util.Date
-
 import model.DAObject
 
 import scala.collection.mutable

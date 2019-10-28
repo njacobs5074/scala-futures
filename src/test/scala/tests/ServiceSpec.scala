@@ -1,13 +1,16 @@
+package tests
+
+import java.util.Date
 import java.util.concurrent.Executors
-import java.util.{ Calendar, Date }
 
 import dto.DTO
 import org.scalatest.AsyncFlatSpec
 import repository.Repository
 import service.Service
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
+/** Tests to exercise the Service with a single threaded executor */
 class ServiceSpec extends AsyncFlatSpec {
   "Service" should "add new item" in {
     val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5)))
@@ -20,17 +23,24 @@ class ServiceSpec extends AsyncFlatSpec {
     }
   }
 
+  it should "fail if updates run in parallel" in {
+    val singleThreadedEC = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+    val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
+    val service = new Service[Int, String](repo)(singleThreadedEC)
+
+    val (t1, t2) = getSuccessiveTimestamps
+
+    val f1 = service.createOrUpdate(DTO(1, "hello", t1))
+    val f2 = service.createOrUpdate(DTO(1, "goodbye", t2))
+
+    recoverToSucceededIf[RuntimeException](Future.sequence(List(f1, f2)))
+  }
+
   it should "not allow the item with the same key to be added twice" in {
     val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
     val service = new Service[Int, String](repo)(ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor()))
 
-    val (t1, t2) = {
-      val c = Calendar.getInstance()
-      val t1 = c.getTime
-      c.add(Calendar.SECOND, 1)
-      val t2 = c.getTime
-      (t1, t2)
-    }
+    val (t1, t2) = getSuccessiveTimestamps
 
     // If we don't flatMap the first call's future, they run in parallel.  Even with a single threaded executor.
     val f = service.createOrUpdate(DTO(1, "hello", t1)).flatMap { _ =>
