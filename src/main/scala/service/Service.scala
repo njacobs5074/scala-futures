@@ -8,8 +8,13 @@ import repository.Repository
 
 import scala.concurrent.{ ExecutionContext, Future }
 
+/** Class to simulate a service layer object that uses the Repository for persistence. */
 class Service[K, V](val repo: Repository[K, V])(implicit ec: ExecutionContext) {
 
+  /**
+   * Create or update the specified DTO in the repo if it is newer than what we have.
+   * We quietly ignore stale updates.
+   */
   def createOrUpdate(dto: DTO[K, V]): Future[Unit] = {
     repo.find(dto.id).flatMap {
       case Some(dao) if dao.lastUpdated.isEmpty || dao.lastUpdated.exists(_.before(dto.lastUpdated)) =>

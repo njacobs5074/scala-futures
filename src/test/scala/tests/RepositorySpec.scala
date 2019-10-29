@@ -1,15 +1,14 @@
 package tests
 
 import java.util.Date
-import java.util.concurrent.Executors
 
 import model._
 import org.scalatest.Matchers._
 import org.scalatest._
 import repository.Repository
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.concurrent.{ Await, ExecutionContext }
 import scala.language.postfixOps
 
 /**
@@ -19,7 +18,7 @@ class RepositorySpec extends FlatSpec {
 
   "Repository" should "insert DAO" in {
 
-    val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5)))
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
 
     // Simulate single-threaded access to the repo from a caller.
     Await.result(repo.insert(DAObject[Int, String](id = 1, data = "Hello", created = new Date())), 500 milliseconds)
@@ -28,7 +27,7 @@ class RepositorySpec extends FlatSpec {
   }
 
   it should "update a DAO" in {
-    val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5)))
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
 
     val (t1, t2) = getSuccessiveTimestamps
     val recordId = 1

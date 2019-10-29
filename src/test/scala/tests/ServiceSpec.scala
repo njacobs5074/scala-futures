@@ -1,20 +1,19 @@
 package tests
 
 import java.util.Date
-import java.util.concurrent.Executors
 
 import dto.DTO
 import org.scalatest.AsyncFlatSpec
 import repository.Repository
 import service.Service
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.Future
 
 /** Tests to exercise the Service with a single threaded executor */
 class ServiceSpec extends AsyncFlatSpec {
   "Service" should "add new item" in {
-    val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5)))
-    val service = new Service[Int, String](repo)(ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor()))
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
+    val service = new Service[Int, String](repo)(newServiceExecutionContext)
 
     val t1 = new Date()
     val f = service.createOrUpdate(DTO(1, "hello", t1))
@@ -24,9 +23,8 @@ class ServiceSpec extends AsyncFlatSpec {
   }
 
   it should "fail if updates run in parallel" in {
-    val singleThreadedEC = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
-    val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
-    val service = new Service[Int, String](repo)(singleThreadedEC)
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
+    val service = new Service[Int, String](repo)(newServiceExecutionContext)
 
     val (t1, t2) = getSuccessiveTimestamps
 
@@ -36,18 +34,37 @@ class ServiceSpec extends AsyncFlatSpec {
     recoverToSucceededIf[RuntimeException](Future.sequence(List(f1, f2)))
   }
 
-  it should "not allow the item with the same key to be added twice" in {
-    val repo = new Repository[Int, String]()(ExecutionContext.fromExecutor(Executors.newCachedThreadPool()))
-    val service = new Service[Int, String](repo)(ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor()))
+  it should "fail second update when futures are vanilla mapped" in {
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
+    val service = new Service[Int, String](repo)(newServiceExecutionContext)
 
     val (t1, t2) = getSuccessiveTimestamps
 
-    // If we don't flatMap the first call's future, they run in parallel.  Even with a single threaded executor.
-    val f = service.createOrUpdate(DTO(1, "hello", t1)).flatMap { _ =>
+    val f1 = service.createOrUpdate(DTO(1, "hello", t1))
+    val f2 = service.createOrUpdate(DTO(1, "goodbye", t2))
+
+    f1.map(_ => f2).map { _ =>
+      repo.repo.get(1) match {
+        case Some(dao) =>
+          assert(dao.data == "hello")
+          assert(dao.lastUpdated.isEmpty)
+        case None =>
+          throw new AssertionError("Failed to find record with id=1")
+      }
+    }
+  }
+
+  it should "correctly serialize when using flatMap" in {
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
+    val service = new Service[Int, String](repo)(newServiceExecutionContext)
+
+    val (t1, t2) = getSuccessiveTimestamps
+
+    val future = service.createOrUpdate(DTO(1, "hello", t1)).flatMap { _ =>
       service.createOrUpdate(DTO(1, "goodbye", t2))
     }
 
-    f.map { _ =>
+    future.map { _ =>
       repo.repo.get(1) match {
         case Some(dao) =>
           assert(dao.data == "goodbye")
@@ -56,6 +73,5 @@ class ServiceSpec extends AsyncFlatSpec {
           throw new AssertionError("Failed to find record with id=1")
       }
     }
-
   }
 }
