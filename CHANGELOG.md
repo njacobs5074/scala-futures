@@ -8,3 +8,4 @@ NB: All notable changes to this project will be documented in this file.  The fo
 - Restructured tests so that we can share code between them.
 - Added a change log :)
 - Commented for clarity throughout project
+- Added async/await tests
