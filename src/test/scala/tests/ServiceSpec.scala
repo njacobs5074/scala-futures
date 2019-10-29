@@ -11,6 +11,7 @@ import scala.concurrent.Future
 
 /** Tests to exercise the Service with a single threaded executor */
 class ServiceSpec extends AsyncFlatSpec {
+
   "Service" should "add new item" in {
     val repo = new Repository[Int, String]()(newRepoExecutionContext)
     val service = new Service[Int, String](repo)(newServiceExecutionContext)
@@ -48,6 +49,26 @@ class ServiceSpec extends AsyncFlatSpec {
         case Some(dao) =>
           assert(dao.data == "hello")
           assert(dao.lastUpdated.isEmpty)
+        case None =>
+          throw new AssertionError("Failed to find record with id=1")
+      }
+    }
+  }
+
+  it should "correctly serialize with a for comprehension" in {
+    val repo = new Repository[Int, String]()(newRepoExecutionContext)
+    val service = new Service[Int, String](repo)(newServiceExecutionContext)
+
+    val (t1, t2) = getSuccessiveTimestamps
+
+    for {
+      _ <- service.createOrUpdate(DTO(1, "hello", t1))
+      _ <- service.createOrUpdate(DTO(1, "goodbye", t2))
+    } yield {
+      repo.repo.get(1) match {
+        case Some(dao) =>
+          assert(dao.data == "goodbye")
+          assert(dao.lastUpdated.contains(t2))
         case None =>
           throw new AssertionError("Failed to find record with id=1")
       }
