@@ -5,14 +5,14 @@ import java.util.Date
 import model._
 import org.scalatest.Matchers._
 import org.scalatest._
-import repository.Repository
+import future.repository.Repository
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 /**
- * Tests to confirm that serialized access to the repository will produce the correct result.
+ * Tests to confirm that serialized access to the future.repository will produce the correct result.
  */
 class RepositorySpec extends FlatSpec {
 

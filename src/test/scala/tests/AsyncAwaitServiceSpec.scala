@@ -4,8 +4,8 @@ import java.util.Date
 
 import dto.DTO
 import org.scalatest.AsyncFlatSpec
-import repository.Repository
-import service.Service
+import future.repository.Repository
+import future.service.Service
 
 import scala.async.Async.{ async, await }
 import scala.concurrent.Future

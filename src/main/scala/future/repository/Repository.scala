@@ -1,11 +1,11 @@
-package repository
+package future.repository
 
 import model.DAObject
 
 import scala.collection.mutable
 import scala.concurrent.{ ExecutionContext, Future }
 
-/** In-memory repository for our DAO's.  Supports insert, update, and find. */
+/** In-memory future.repository for our DAO's.  Supports insert, update, and find. */
 class Repository[K, T](implicit executionContext: ExecutionContext) {
 
   // This is public to simplify inspection in our tests.

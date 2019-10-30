@@ -1,14 +1,14 @@
-package service
+package future.service
 
 import java.util.Date
 
 import dto.DTO
 import model.DAObject
-import repository.Repository
+import future.repository.Repository
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-/** Class to simulate a service layer object that uses the Repository for persistence. */
+/** Class to simulate a future.service layer object that uses the Repository for persistence. */
 class Service[K, V](val repo: Repository[K, V])(implicit ec: ExecutionContext) {
 
   /**

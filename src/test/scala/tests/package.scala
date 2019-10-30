@@ -1,7 +1,9 @@
-import java.util.{ Calendar, Date }
+import java.util.{Calendar, Date}
 import java.util.concurrent.Executors
 
-import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor }
+import monix.execution.Scheduler
+
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 package object tests {
 
@@ -18,7 +20,11 @@ package object tests {
   def newRepoExecutionContext: ExecutionContextExecutor =
     ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
 
-  /** Execution context used by our service in the tests */
+  /** Execution context used by our future.service in the tests */
   def newServiceExecutionContext: ExecutionContextExecutor =
     ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+
+  /** Monix Schedulers */
+  def repoScheduler: Scheduler = Scheduler.apply(newRepoExecutionContext)
+  def serviceScheduler: Scheduler = Scheduler.apply(newServiceExecutionContext)
 }
