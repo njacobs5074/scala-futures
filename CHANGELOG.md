@@ -9,3 +9,4 @@ NB: All notable changes to this project will be documented in this file.  The fo
 - Added a change log :)
 - Commented for clarity throughout project
 - Added async/await tests
+- Added simple worker example in Java
