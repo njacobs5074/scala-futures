@@ -2,7 +2,6 @@ package hive;
 
 import scala.Int;
 
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,10 +14,9 @@ public class QueenBee implements Runnable, FlowerIntelligenceSink {
     private Logger logger = Logger.getLogger(getClass().getSimpleName());
 
     private ExecutorService executor;
-    private Random rand = new Random();
     private int numFlowersFound;
 
-    QueenBee(ExecutorService executor, int numFlowersNeeded) {
+    private QueenBee(ExecutorService executor, int numFlowersNeeded) {
         this.executor = executor;
         this.numFlowersNeeded = numFlowersNeeded;
     }
@@ -68,12 +66,12 @@ public class QueenBee implements Runnable, FlowerIntelligenceSink {
     public void foundFlowers(String workerBeeName) {
         numFlowersFound++;
         logger.info(String.format("QueenBee: %s found flowers! %d so far today", workerBeeName, numFlowersFound));
-
     }
 
     public static void main(String[] args) {
 
-        QueenBee queenBee = new QueenBee(Executors.newSingleThreadExecutor(), 3);
+        QueenBee queenBee = new QueenBee(Executors.newCachedThreadPool(), 5);
+        //QueenBee queenBee = new QueenBee(Executors.newSingleThreadExecutor(), 5);
 
         queenBee.run();
 

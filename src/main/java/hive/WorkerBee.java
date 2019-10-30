@@ -1,7 +1,5 @@
 package hive;
 
-import com.sun.corba.se.spi.orbutil.threadpool.Work;
-
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -15,10 +13,6 @@ public class WorkerBee implements Runnable {
     WorkerBee(String name, FlowerIntelligenceSink flowerIntelligenceSink) {
         this.name = name;
         this.flowerIntelligenceSink = flowerIntelligenceSink;
-    }
-
-    Boolean isLooking() {
-        return looking;
     }
 
     @Override
@@ -38,9 +32,5 @@ public class WorkerBee implements Runnable {
                 looking = false;
             }
         }
-    }
-
-    String getName() {
-        return name;
     }
 }
